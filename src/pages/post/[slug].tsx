@@ -5,10 +5,10 @@ import { useRouter } from 'next/router';
 import { RichText } from 'prismic-dom';
 import Image from 'next/image';
 import Head from 'next/head';
+import Link from 'next/link';
 
 // import { render } from '@testing-library/react';
 
-import { useEffect, useState } from 'react';
 import { getPrismicClient } from '../../services/prismic';
 import { formatDatePtBR } from '../../helpers/datePtBR';
 import Header from '../../components/Header';
@@ -36,14 +36,17 @@ interface Post {
 
 interface PostProps {
   post: Post;
+  preview: boolean;
 }
 
-export default function Post({ post }: PostProps): JSX.Element {
+export default function Post({ post, preview }: PostProps): JSX.Element {
+  const { first_publication_date } = post;
+  const { title, author, banner, content } = post.data;
+
   const router = useRouter();
-  const [readingTime, setReadingTime] = useState<number>();
 
   function averageReadingTime(): number {
-    const totalWords = post.data.content.reduce((accWords, postContent) => {
+    const totalWords = content.reduce((accWords, postContent) => {
       let postHeading = 0;
       let postBody = 0;
 
@@ -70,35 +73,33 @@ export default function Post({ post }: PostProps): JSX.Element {
   return (
     <>
       <Head>
-        <title>{post.data.title} | spacetraveling.</title>
+        <title>{title} | spacetraveling.</title>
       </Head>
 
       <main className={styles.postContainer}>
         <Header />
 
         <div className={styles.postImage}>
-          <Image src={post.data.banner.url.split('?')[0]} layout="fill" />
+          <Image src={banner.url.split('?')[0]} layout="fill" />
         </div>
 
         <section className={`${commonStyles.container} ${styles.post}`}>
-          <h1>{post.data.title}</h1>
+          <h1>{title}</h1>
 
           <span className={styles.postInfo}>
             <p>
               <FiUser />
-              <time>
-                {formatDatePtBR(new Date(post.first_publication_date))}
-              </time>
+              <time>{formatDatePtBR(new Date(first_publication_date))}</time>
             </p>
             <p>
-              <FiCalendar /> {post.data.author}
+              <FiCalendar /> {author}
             </p>
             <p>
               <FiClock /> {averageReadingTime()} min
             </p>
           </span>
 
-          {post.data.content.map(postContent => {
+          {content.map(postContent => {
             return (
               <div className={styles.postContent} key={postContent.heading}>
                 <h2>{postContent.heading}</h2>
@@ -110,6 +111,14 @@ export default function Post({ post }: PostProps): JSX.Element {
               </div>
             );
           })}
+
+          {preview && (
+            <aside>
+              <Link href="/api/exit-preview">
+                <a>Sair do modo Preview</a>
+              </Link>
+            </aside>
+          )}
         </section>
       </main>
     </>
@@ -118,6 +127,7 @@ export default function Post({ post }: PostProps): JSX.Element {
 
 export const getStaticPaths: GetStaticPaths = async () => {
   const prismic = getPrismicClient();
+
   const posts = await prismic.query(
     [Prismic.Predicates.at('document.type', 'posts')],
     {
@@ -138,17 +148,26 @@ export const getStaticPaths: GetStaticPaths = async () => {
   };
 };
 
-export const getStaticProps: GetStaticProps = async ({ params }) => {
+export const getStaticProps: GetStaticProps = async ({
+  params,
+  preview = false,
+  previewData,
+}) => {
   const { slug } = params;
   const prismic = getPrismicClient();
-  const response = (await prismic.getByUID('posts', String(slug), {})) as Post;
 
+  const response = (await prismic.getByUID('posts', String(slug), {
+    ref: previewData?.ref ?? null,
+  })) as Post;
+
+  const { first_publication_date, data } = response;
   return {
     props: {
       post: {
-        ...response,
+        data,
+        first_publication_date,
       },
+      preview,
     },
-    revalidate: 60 * 60 * 24,
   };
 };
