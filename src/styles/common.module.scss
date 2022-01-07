@@ -1,5 +1,15 @@
 .container {
-  max-width: 1120px;
+  max-width: 720px;
   margin: 0 auto;
-  padding: 0 2rem;
+  padding: 0 1rem;
+}
+
+.previewButton {
+  background-color: var(--gray-50);
+  color: var(--black-500);
+  display: block;
+  font-weight: 600;
+  margin: 3rem 0 4rem;
+  text-align: center;
+  padding: 1rem 0
 }

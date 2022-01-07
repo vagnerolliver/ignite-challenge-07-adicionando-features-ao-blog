@@ -1,5 +1,6 @@
 import { FiUser, FiCalendar, FiClock } from 'react-icons/fi';
 import { GetStaticPaths, GetStaticProps } from 'next';
+import { ParsedUrlQuery } from 'querystring';
 import Prismic from '@prismicio/client';
 import { useRouter } from 'next/router';
 import { RichText } from 'prismic-dom';
@@ -7,15 +8,23 @@ import Image from 'next/image';
 import Head from 'next/head';
 import Link from 'next/link';
 
-// import { render } from '@testing-library/react';
-
 import { getPrismicClient } from '../../services/prismic';
 import { formatDatePtBR } from '../../helpers/datePtBR';
+import Comments from '../../components/Comments/Index';
 import Header from '../../components/Header';
 
 import commonStyles from '../../styles/common.module.scss';
 import styles from './post.module.scss';
 
+interface PreviewDataProps {
+  ref: string;
+}
+
+interface PreviewProps {
+  params: ParsedUrlQuery;
+  preview: boolean;
+  previewData?: PreviewDataProps | null;
+}
 interface PostContent {
   heading: string;
   body: {
@@ -33,7 +42,6 @@ interface Post {
     content: PostContent[];
   };
 }
-
 interface PostProps {
   post: Post;
   preview: boolean;
@@ -112,12 +120,12 @@ export default function Post({ post, preview }: PostProps): JSX.Element {
             );
           })}
 
+          <Comments />
+
           {preview && (
-            <aside>
-              <Link href="/api/exit-preview">
-                <a>Sair do modo Preview</a>
-              </Link>
-            </aside>
+            <Link href="/api/exit-preview">
+              <a className={commonStyles.previewButton}>Sair do modo Preview</a>
+            </Link>
           )}
         </section>
       </main>
@@ -152,7 +160,7 @@ export const getStaticProps: GetStaticProps = async ({
   params,
   preview = false,
   previewData,
-}) => {
+}: PreviewProps) => {
   const { slug } = params;
   const prismic = getPrismicClient();
 

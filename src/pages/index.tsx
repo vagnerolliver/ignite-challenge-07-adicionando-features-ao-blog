@@ -69,20 +69,18 @@ export default function Home({
           ))}
         </div>
 
-        {preview && (
-          <aside>
-            <Link href="/api/exit-preview">
-              <a>Sair do modo Preview</a>
-            </Link>
-          </aside>
-        )}
-
         {nextPage && (
           <div className={styles.HomeFooter}>
             <button type="button" onClick={loadMorePosts}>
               Carregar mais posts
             </button>
           </div>
+        )}
+
+        {preview && (
+          <Link href="/api/exit-preview">
+            <a className={commonStyles.previewButton}>Sair do modo Preview</a>
+          </Link>
         )}
       </div>
     </>
