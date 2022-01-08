@@ -1,6 +1,7 @@
 import { FiUser, FiCalendar, FiClock } from 'react-icons/fi';
 import { GetStaticPaths, GetStaticProps } from 'next';
 import { ParsedUrlQuery } from 'querystring';
+import { useEffect, useState } from 'react';
 import Prismic from '@prismicio/client';
 import { useRouter } from 'next/router';
 import { RichText } from 'prismic-dom';
@@ -42,14 +43,27 @@ interface Post {
     content: PostContent[];
   };
 }
+
+interface NavigationProps {
+  uid: string;
+  title: string;
+}
 interface PostProps {
   post: Post;
   preview: boolean;
+  navigation: NavigationProps[];
 }
 
-export default function Post({ post, preview }: PostProps): JSX.Element {
+export default function Post({
+  post,
+  preview,
+  navigation,
+}: PostProps): JSX.Element {
   const { first_publication_date } = post;
   const { title, author, banner, content } = post.data;
+
+  const [prev, setPrev] = useState<NavigationProps>(null);
+  const [next, setNext] = useState<NavigationProps>(null);
 
   const router = useRouter();
 
@@ -73,6 +87,21 @@ export default function Post({ post, preview }: PostProps): JSX.Element {
 
     return Math.ceil(totalWords / wordsPerMinute);
   }
+
+  function configNavigation(): void {
+    const currentPost = navigation.findIndex(item => item.title === title);
+    setPrev(navigation[currentPost - 1]);
+    setNext(navigation[currentPost + 1]);
+  }
+
+  function showNavigation(): boolean {
+    return !!prev || !!next;
+  }
+
+  useEffect(() => {
+    configNavigation();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [title]);
 
   if (router.isFallback) {
     return <div>Carregando...</div>;
@@ -119,6 +148,23 @@ export default function Post({ post, preview }: PostProps): JSX.Element {
               </div>
             );
           })}
+
+          {showNavigation() && (
+            <div className={styles.postNavigation}>
+              <div data-nav="prev" style={!prev ? { display: 'none' } : null}>
+                <span>{prev?.title}</span>
+                <Link href={`/post/${prev?.uid}`}>
+                  <a>Post Anterior</a>
+                </Link>
+              </div>
+              <div data-nav="next" style={!next ? { display: 'none' } : null}>
+                <span>{next?.title}</span>
+                <Link href={`/post/${next?.uid}`}>
+                  <a>Próximo Anterior</a>
+                </Link>
+              </div>
+            </div>
+          )}
 
           <Comments />
 
@@ -168,6 +214,21 @@ export const getStaticProps: GetStaticProps = async ({
     ref: previewData?.ref ?? null,
   })) as Post;
 
+  const posts = await prismic.query(
+    [Prismic.Predicates.at('document.type', 'posts')],
+    {
+      orderings: '[document.first_publication_date desc]',
+      fetch: ['posts.title'],
+    }
+  );
+
+  const navigation = posts.results.map(post => {
+    return {
+      uid: post.uid,
+      title: post.data.title,
+    };
+  });
+
   const { first_publication_date, data } = response;
   return {
     props: {
@@ -176,6 +237,7 @@ export const getStaticProps: GetStaticProps = async ({
         first_publication_date,
       },
       preview,
+      navigation,
     },
   };
 };
