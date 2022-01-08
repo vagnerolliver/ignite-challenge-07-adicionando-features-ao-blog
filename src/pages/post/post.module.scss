@@ -19,25 +19,35 @@
 }
 
 .postInfo {
-  display: flex;
-  align-items: center;
+  margin: 1.5rem 0 4rem;
   color: var(--gray-200);
-  margin: 1rem 0 4rem;
 
-  time {
-    text-transform: capitalize;
-  }
-
-  p {
+  &Header {
     display: flex;
     align-items: center;
-    margin-right: 1rem;
+
+    time {
+      text-transform: capitalize;
+    }
+
+    p {
+      display: flex;
+      align-items: center;
+      margin-right: 1rem;
+    }
+
+    svg {
+      stroke: var(--white);
+      margin-right: 0.5rem;
+    }
   }
 
-  svg {
-    stroke: var(--white);
-    margin-right: 0.5rem;
+  &Edited {
+    font-size: .8rem;
+    font-style: italic;
+    margin-top: .8rem;
   }
+
 }
 
 .postContent {

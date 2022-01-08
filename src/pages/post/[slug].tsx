@@ -10,7 +10,7 @@ import Head from 'next/head';
 import Link from 'next/link';
 
 import { getPrismicClient } from '../../services/prismic';
-import { formatDatePtBR } from '../../helpers/datePtBR';
+import { formatDatePtBR, formatDateTimePtBR } from '../../helpers/datePtBR';
 import Comments from '../../components/Comments/Index';
 import Header from '../../components/Header';
 
@@ -33,6 +33,7 @@ interface PostContent {
   }[];
 }
 interface Post {
+  last_publication_date: string | null;
   first_publication_date: string | null;
   data: {
     title: string;
@@ -59,7 +60,7 @@ export default function Post({
   preview,
   navigation,
 }: PostProps): JSX.Element {
-  const { first_publication_date } = post;
+  const { first_publication_date, last_publication_date } = post;
   const { title, author, banner, content } = post.data;
 
   const [prev, setPrev] = useState<NavigationProps>(null);
@@ -116,25 +117,37 @@ export default function Post({
       <main className={styles.postContainer}>
         <Header />
 
-        <div className={styles.postImage}>
-          <Image src={banner.url.split('?')[0]} layout="fill" />
-        </div>
+        {banner.url && (
+          <div className={styles.postImage}>
+            <Image src={banner.url.split('?')[0]} layout="fill" />
+          </div>
+        )}
 
         <section className={`${commonStyles.container} ${styles.post}`}>
           <h1>{title}</h1>
 
-          <span className={styles.postInfo}>
-            <p>
-              <FiUser />
-              <time>{formatDatePtBR(new Date(first_publication_date))}</time>
-            </p>
-            <p>
-              <FiCalendar /> {author}
-            </p>
-            <p>
-              <FiClock /> {averageReadingTime()} min
-            </p>
-          </span>
+          <div className={styles.postInfo}>
+            <div className={styles.postInfoHeader}>
+              <p>
+                <FiUser />
+                <time>{formatDatePtBR(new Date(first_publication_date))}</time>
+              </p>
+              <p>
+                <FiCalendar /> {author}
+              </p>
+              <p>
+                <FiClock /> {averageReadingTime()} min
+              </p>
+            </div>
+            {last_publication_date && (
+              <div className={styles.postInfoEdited}>
+                * editado
+                <time>
+                  {formatDateTimePtBR(new Date(last_publication_date))}
+                </time>
+              </div>
+            )}
+          </div>
 
           {content.map(postContent => {
             return (
@@ -229,12 +242,13 @@ export const getStaticProps: GetStaticProps = async ({
     };
   });
 
-  const { first_publication_date, data } = response;
+  const { first_publication_date, last_publication_date, data } = response;
   return {
     props: {
       post: {
         data,
         first_publication_date,
+        last_publication_date,
       },
       preview,
       navigation,
