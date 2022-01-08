@@ -1,6 +1,13 @@
 #Desafio Ignite Q3 2021 - Adicionando features ao Blog
 
-![](public/images/preview.png)
+![](public/images/preview2.png)
+
+## features add
+
+- preview prismic
+- integrate with utteranc.es  comment/issue github
+- post navigation
+- last publication post
 
 ## Setup
 
